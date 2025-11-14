@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Dr. Paws</string>
+    <string name="title_activity_main">Dr. Paws</string>
+    <string name="package_name">de.tklengineering.drpaws</string>
+    <string name="custom_url_scheme">de.tklengineering.drpaws</string>
+</resources>
