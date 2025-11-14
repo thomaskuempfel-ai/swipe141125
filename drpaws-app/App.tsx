@@ -15,6 +15,7 @@ import { PersonalityCard } from './components/PersonalityCard';
 import { UploadCard } from './components/UploadCard';
 import { t } from './localization/translations';
 import { Dashboard } from './components/Dashboard';
+import { WellnessHub } from './components/WellnessHub';
 import { ReportDetailsModal } from './components/ReportDetailsModal';
 import { VoiceChatModal } from './components/VoiceChatModal';
 import { MemoryLaneModal } from './components/MemoryLaneModal';
@@ -463,6 +464,10 @@ const App: React.FC = () => {
         localStorage.setItem('notificationPrompted', 'true');
     };
 
+    const handleExportPDF = () => {
+        alert('PDF export feature coming soon! This will generate a comprehensive vet-ready report.');
+    };
+
     const cards = selectedPet && latestReport ? [
         <EditorCard key={`${latestReport.id}-2`} report={latestReport} sharedImageUrl={sharedImageUrl} dailyTip={dailyTip} isTipLoading={isTipLoading} />,
         <VibeCard key={`${latestReport.id}-1`} report={latestReport} sharedImageUrl={sharedImageUrl} setSharedImageUrl={setSharedImageUrl} />,
@@ -522,12 +527,20 @@ const App: React.FC = () => {
 
     if (view === 'wellness_hub') {
         return (
-            <div className="w-full h-full flex flex-col">
-                <div className="flex-grow overflow-y-auto p-4 sm:p-6 lg:p-8">
-                   <button onClick={() => setView('swipe')} className="mb-4 text-[var(--accent-color)] font-semibold hover:underline">&larr; Back to Swipe View</button>
-                    <Dashboard
+            <div className="w-full h-full flex flex-col bg-slate-900">
+                <div className="flex items-center justify-between p-4 border-b border-slate-700">
+                    <button 
+                        onClick={() => setView('swipe')} 
+                        className="text-teal-400 font-semibold hover:text-teal-300 transition-colors flex items-center gap-2"
+                    >
+                        ← Back to Swipe View
+                    </button>
+                    <h1 className="text-xl font-bold text-slate-100">Wellness Hub</h1>
+                    <div className="w-32"></div>
+                </div>
+                <div className="flex-grow overflow-y-auto">
+                    <WellnessHub
                         pet={selectedPet}
-                        pets={pets}
                         reports={reportsForSelectedPet}
                         latestReport={latestReport}
                         personalityProfile={personalityProfile}
@@ -538,18 +551,13 @@ const App: React.FC = () => {
                         predictiveTip={predictiveTip}
                         isPredictiveTipLoading={isPredictiveTipLoading}
                         individualScore={individualScore}
-                        historicReportToShow={historicReportToShow}
-                        onExitHistoricView={() => setHistoricReportToShow(null)}
-                        onViewReport={(report) => setHistoricReportToShow(report)}
-                        onViewDetails={handleViewDetails}
-                        onAddPet={() => setIsPetProfileModalOpen(true)}
+                        notificationPermission={notificationPermission}
                         onStartAnalysis={() => setIsAnalysisModalOpen(true)}
-                        onStartVoiceChat={handleStartVoiceChat}
-                        onShowEmotionReel={handleShowEmotionReel}
-                        onShowAttitudeReel={handleShowAttitudeReel}
+                        onViewDetails={handleViewDetails}
+                        onRequestNotificationPermission={handleRequestNotificationPermission}
+                        onExportPDF={handleExportPDF}
                         t={(key, options) => t(key, 'en', options)}
                         language='en'
-                        setActiveView={setView} 
                     />
                 </div>
             </div>
