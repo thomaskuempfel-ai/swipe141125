@@ -1,0 +1,8 @@
+{
+  "name": "Dr.Paws 141125 _swipe prebeta",
+  "description": "An AI-powered application to help pet owners understand their pet's emotions and needs through video and audio analysis. It provides a detailed report and generates a calming audio response for the pet.",
+  "requestFramePermissions": [
+    "microphone",
+    "camera"
+  ]
+}

@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Pet Empathy Translator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+  <script type="importmap">
+{
+  "imports": {
+    "react/": "https://aistudiocdn.com/react@^19.2.0/",
+    "react": "https://aistudiocdn.com/react@^19.2.0",
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
+    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.28.0",
+    "recharts": "https://aistudiocdn.com/recharts@^3.3.0",
+    "jspdf": "https://aistudiocdn.com/jspdf@^2.5.1",
+    "html2canvas": "https://aistudiocdn.com/html2canvas@^1.4.1"
+  }
+}
+</script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&display=swap');
+    .font-kalam { font-family: 'Kalam', cursive; }
+    
+    @keyframes fade-in {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    .animate-fade-in {
+        animation: fade-in 0.5s ease-out forwards;
+    }
+
+    @keyframes float-fade {
+        0% { transform: translateY(0); opacity: 0; }
+        25% { opacity: 0.7; }
+        75% { opacity: 0.7; }
+        100% { transform: translateY(-30px); opacity: 0; }
+    }
+
+    @keyframes pulse-heart {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.1); }
+    }
+    .animate-pulse-heart {
+        animation: pulse-heart 2.5s ease-in-out infinite;
+    }
+
+    @keyframes text-glow {
+      0%, 100% { text-shadow: 0 0 5px currentColor, 0 0 10px currentColor; }
+      50% { text-shadow: 0 0 10px currentColor, 0 0 20px currentColor; }
+    }
+    .animate-text-glow { animation: text-glow 2.5s ease-in-out infinite; }
+
+    @keyframes pet-icon-float {
+      0% { transform: translateY(0px) translateX(0px) rotate(0deg); opacity: 0.5; }
+      25% { transform: translateY(-10px) translateX(5px) rotate(15deg); opacity: 0.8; }
+      50% { transform: translateY(0px) translateX(-5px) rotate(0deg); opacity: 1; }
+      75% { transform: translateY(10px) translateX(5px) rotate(-15deg); opacity: 0.8; }
+      100% { transform: translateY(0px) translateX(0px) rotate(0deg); opacity: 0.5; }
+    }
+    .animate-pet-icon-1 { animation: pet-icon-float 10s ease-in-out infinite; top: 15%; left: 20%; }
+    .animate-pet-icon-2 { animation: pet-icon-float 12s ease-in-out infinite reverse; top: 25%; left: 60%; }
+    .animate-pet-icon-3 { animation: pet-icon-float 11s ease-in-out infinite; top: 60%; left: 10%; }
+    .animate-pet-icon-4 { animation: pet-icon-float 9s ease-in-out infinite reverse; top: 55%; left: 70%; }
+
+    /* New styles for swipe UI */
+    html, body {
+      height: 100%;
+      width: 100%;
+      margin: 0;
+      overflow: hidden; /* Prevent scrolling on the body */
+    }
+    #root {
+        height: 100vh;
+        width: 100vw;
+        overflow: hidden;
+    }
+    .swipe-container {
+        display: flex;
+        height: 100%;
+        width: 100%;
+        transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    }
+    .swipe-card {
+        flex-shrink: 0;
+        width: 100%;
+        height: 100%;
+        padding: 1rem;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+    }
+    /* Hide scrollbar for cards */
+    .swipe-card::-webkit-scrollbar { display: none; }
+    .swipe-card { -ms-overflow-style: none; scrollbar-width: none; }
+
+    /* Theming variables */
+    .theme-male {
+      --bg-gradient: linear-gradient(to bottom right, #38bdf8, #1e3a8a); /* from-sky-400 to-blue-800 */
+      --accent-color: #2563eb; /* blue-600 */
+      --accent-color-light: #60a5fa; /* blue-400 */
+      --accent-text: #93c5fd; /* blue-300 */
+      --text-primary: #dbeafe; /* blue-100 */
+      --text-secondary: #94a3b8; /* slate-400 */
+      --bg-card: rgba(30, 58, 138, 0.3); /* blue-900/30 */
+      --border-color: #1e3a8a; /* blue-900 */
+    }
+
+    .theme-female {
+      --bg-gradient: linear-gradient(to bottom right, #1e1b4b, #4c1d95, #86198f); /* from-indigo-950 via-purple-900 to-fuchsia-900 */
+      --accent-color: #db2777; /* pink-600 */
+      --accent-color-light: #f472b6; /* pink-400 */
+      --accent-text: #f9a8d4; /* pink-300 */
+      --text-primary: #fce7f3; /* pink-50 */
+      --text-secondary: #e9d5ff; /* purple-200 */
+      --bg-card: rgba(76, 29, 149, 0.3); /* purple-900/30 */
+      --border-color: #581c87; /* purple-900 */
+    }
+
+    .splash-bg {
+        background-image: linear-gradient(to bottom right, #db2777, #172554); /* from-pink-600 to-blue-950 */
+    }
+
+    body {
+        background-image: var(--bg-gradient);
+        color: var(--text-primary);
+        transition: background-image 0.5s ease-in-out;
+    }
+    .dark {
+        color-scheme: dark;
+    }
+  </style>
+<link rel="stylesheet" href="/index.css">
+</head>
+  <body class="dark">
+    <div id="root"></div>
+    <script type="module" src="/index.tsx"></script>
+  </body>
+</html>
