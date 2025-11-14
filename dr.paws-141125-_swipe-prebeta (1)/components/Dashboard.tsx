@@ -1,6 +1,6 @@
 
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import { PetProfile, HistoricReport, PetPersonalityProfile, DailyTipsResponse, Language, AppView, PredictiveTip } from '../types';
 import { DailyTip } from './DailyTip';
 import { PersonalityProfileDisplay } from './PersonalityProfileDisplay';
@@ -100,7 +100,10 @@ export const Dashboard: React.FC<DashboardProps> = ({
         );
     }
 
-    const sortedReports = [...reports].sort((a,b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+    const sortedReports = useMemo(() => 
+        [...reports].sort((a,b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()),
+        [reports]
+    );
     
     return (
         <div className="space-y-8">
