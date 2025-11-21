@@ -1,0 +1,42 @@
+name: Build Windows Installer
+
+on:
+  push:
+    branches:
+      - devin/1763727248-electron-spy-app
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Build Windows installer
+        run: npm run build:win
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: false
+      
+      - name: Upload Windows installer
+        uses: actions/upload-artifact@v3
+        with:
+          name: Swipe-Spy-Windows-Installer
+          path: dist/*.exe
+          if-no-files-found: error
+      
+      - name: Upload unpacked app
+        uses: actions/upload-artifact@v3
+        with:
+          name: Swipe-Spy-Windows-Unpacked
+          path: dist/win-unpacked/
+          if-no-files-found: warn
