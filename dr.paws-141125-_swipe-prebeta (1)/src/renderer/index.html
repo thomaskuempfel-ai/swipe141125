@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Swipe Spy</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Header -->
+    <header class="header">
+      <div class="header-left">
+        <h1>🕵️ Swipe Spy</h1>
+        <span class="subtitle">Local Intelligence</span>
+      </div>
+      <div class="header-right">
+        <div id="premium-badge" class="premium-badge hidden">
+          <span class="premium-icon">⭐</span>
+          <span id="premium-text">Premium</span>
+        </div>
+        <div id="alert-badge" class="alert-badge hidden">
+          <span class="alert-icon">🚨</span>
+        </div>
+        <button id="settings-btn" class="icon-btn">⚙️</button>
+      </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <!-- Sidebar -->
+      <aside class="sidebar">
+        <div class="add-target-section">
+          <h3>Add Target</h3>
+          <button id="add-csv-btn" class="btn btn-secondary">
+            📄 Import CSV
+          </button>
+          <div class="divider">or</div>
+          <input 
+            type="text" 
+            id="linkedin-url-input" 
+            placeholder="Paste LinkedIn URL..."
+            class="input"
+          />
+          <button id="add-linkedin-btn" class="btn btn-primary">
+            ➕ Add Profile
+          </button>
+        </div>
+
+        <div class="premium-section" id="free-tier-notice">
+          <div class="premium-card">
+            <h4>🔒 Premium Features</h4>
+            <ul>
+              <li>Live X/Twitter monitoring</li>
+              <li>Real-time churn alerts</li>
+              <li>Slack integration</li>
+              <li>Mobile push notifications</li>
+              <li>Predictive analytics</li>
+            </ul>
+            <button id="upgrade-btn" class="btn btn-premium">
+              Upgrade - $29/month
+            </button>
+          </div>
+        </div>
+
+        <div class="stats-section">
+          <h4>Stats</h4>
+          <div class="stat-item">
+            <span class="stat-label">Targets:</span>
+            <span id="target-count" class="stat-value">0</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">Alerts:</span>
+            <span id="alert-count" class="stat-value">0</span>
+          </div>
+        </div>
+      </aside>
+
+      <!-- Target List -->
+      <section class="target-list-section">
+        <div class="section-header">
+          <h2>Targets</h2>
+          <button id="refresh-btn" class="btn btn-small">🔄 Refresh</button>
+        </div>
+        
+        <div id="targets-container" class="targets-container">
+          <div class="empty-state">
+            <p>No targets yet. Add a CSV or LinkedIn URL to get started.</p>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Settings Modal -->
+    <div id="settings-modal" class="modal hidden">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>Settings</h2>
+          <button id="close-settings-btn" class="close-btn">✕</button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label for="grok-api-key">Grok API Key</label>
+            <input 
+              type="password" 
+              id="grok-api-key" 
+              class="input"
+              placeholder="Enter your Grok API key..."
+            />
+            <small>Required for personality analysis</small>
+          </div>
+
+          <div class="form-group premium-only">
+            <label for="slack-webhook">Slack Webhook URL</label>
+            <input 
+              type="text" 
+              id="slack-webhook" 
+              class="input"
+              placeholder="https://hooks.slack.com/..."
+            />
+            <small>Premium: Get alerts in Slack</small>
+          </div>
+
+          <div class="form-group premium-only">
+            <label for="fcm-key">FCM Server Key</label>
+            <input 
+              type="password" 
+              id="fcm-key" 
+              class="input"
+              placeholder="Enter your FCM key..."
+            />
+            <small>Premium: Mobile push notifications</small>
+          </div>
+
+          <button id="save-settings-btn" class="btn btn-primary">
+            Save Settings
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Alert Modal -->
+    <div id="alert-modal" class="modal hidden">
+      <div class="modal-content alert-modal-content">
+        <div class="modal-header">
+          <h2>🚨 Churn Alert</h2>
+          <button id="close-alert-btn" class="close-btn">✕</button>
+        </div>
+        <div class="modal-body" id="alert-modal-body">
+          <!-- Alert details will be inserted here -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="renderer.js"></script>
+</body>
+</html>
