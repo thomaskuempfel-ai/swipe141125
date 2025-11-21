@@ -64,10 +64,14 @@ class TargetManager {
       bio: '',
       posts: [],
       hierarchy: '',
+      headline: '',
+      imageUrl: '',
       personalityTags: [],
       churnSignals: [],
       lastChecked: null,
-      addedAt: new Date().toISOString()
+      addedAt: new Date().toISOString(),
+      partialData: false,
+      behindLoginWall: false
     };
 
     try {
@@ -76,6 +80,10 @@ class TargetManager {
       target.bio = profileData.bio;
       target.posts = profileData.posts;
       target.hierarchy = profileData.hierarchy;
+      target.headline = profileData.headline;
+      target.imageUrl = profileData.imageUrl;
+      target.partialData = profileData.partialData;
+      target.behindLoginWall = profileData.behindLoginWall;
       
       const grokApiKey = this.store.get('grokApiKey');
       if (grokApiKey && profileData.bio) {
@@ -84,6 +92,7 @@ class TargetManager {
       }
     } catch (error) {
       console.error('Error scraping LinkedIn profile:', error);
+      target.partialData = true;
     }
 
     this.targets.push(target);

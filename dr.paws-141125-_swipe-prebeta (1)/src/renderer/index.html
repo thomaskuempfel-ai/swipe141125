@@ -38,6 +38,16 @@
           <div class="divider">or</div>
           <input 
             type="text" 
+            id="search-name-input" 
+            placeholder="Search by name..."
+            class="input"
+          />
+          <button id="search-btn" class="btn btn-secondary">
+            🔍 Search
+          </button>
+          <div class="divider">or</div>
+          <input 
+            type="text" 
             id="linkedin-url-input" 
             placeholder="Paste LinkedIn URL..."
             class="input"
@@ -148,6 +158,19 @@
         </div>
         <div class="modal-body" id="alert-modal-body">
           <!-- Alert details will be inserted here -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Search Results Modal -->
+    <div id="search-modal" class="modal hidden">
+      <div class="modal-content search-modal-content">
+        <div class="modal-header">
+          <h2>🔍 Search Results</h2>
+          <button id="close-search-btn" class="close-btn">✕</button>
+        </div>
+        <div class="modal-body" id="search-modal-body">
+          <!-- Search results will be inserted here -->
         </div>
       </div>
     </div>

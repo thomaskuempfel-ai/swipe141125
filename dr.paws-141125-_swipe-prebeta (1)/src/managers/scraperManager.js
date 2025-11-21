@@ -48,52 +48,251 @@ class ScraperManager {
       name: '',
       bio: '',
       posts: [],
-      hierarchy: ''
+      hierarchy: '',
+      headline: '',
+      location: '',
+      imageUrl: '',
+      behindLoginWall: false,
+      partialData: false
     };
 
     try {
       await driver.get(url);
       await driver.sleep(3000); // Wait for page load
 
-      try {
-        const nameElement = await driver.findElement(By.css('h1.text-heading-xlarge'));
-        profileData.name = await nameElement.getText();
-      } catch (e) {
-        console.log('Could not extract name');
+      const pageSource = await driver.getPageSource();
+      const isLoginWall = pageSource.includes('authwall') || 
+                          pageSource.includes('Sign in') || 
+                          pageSource.includes('Join now') ||
+                          pageSource.includes('auth-wall');
+      
+      if (isLoginWall) {
+        console.log('LinkedIn profile is behind login wall, extracting limited data');
+        profileData.behindLoginWall = true;
+        profileData.partialData = true;
       }
 
+      
       try {
-        const bioElement = await driver.findElement(By.css('.pv-about-section .pv-about__summary-text, .display-flex.ph5.pv3'));
-        profileData.bio = await bioElement.getText();
-      } catch (e) {
-        console.log('Could not extract bio');
-      }
-
-      try {
-        const postElements = await driver.findElements(By.css('.feed-shared-update-v2__description'));
-        for (let i = 0; i < Math.min(postElements.length, 5); i++) {
-          const postText = await postElements[i].getText();
-          profileData.posts.push({
-            text: postText,
-            timestamp: new Date().toISOString()
-          });
+        const jsonLdScript = await driver.executeScript(`
+          const scripts = document.querySelectorAll('script[type="application/ld+json"]');
+          for (let script of scripts) {
+            try {
+              const data = JSON.parse(script.textContent);
+              if (data['@type'] === 'Person' || data['@type'] === 'ProfilePage') {
+                return script.textContent;
+              }
+            } catch (e) {}
+          }
+          return null;
+        `);
+        
+        if (jsonLdScript) {
+          const jsonData = JSON.parse(jsonLdScript);
+          if (jsonData.name) profileData.name = jsonData.name;
+          if (jsonData.description) profileData.bio = jsonData.description;
+          if (jsonData.jobTitle) profileData.headline = jsonData.jobTitle;
+          if (jsonData.image) profileData.imageUrl = jsonData.image;
+          console.log('Extracted data from JSON-LD');
         }
       } catch (e) {
-        console.log('Could not extract posts');
+        console.log('Could not extract JSON-LD data');
       }
 
       try {
-        const companyElement = await driver.findElement(By.css('.pv-text-details__right-panel .text-body-medium'));
-        profileData.hierarchy = await companyElement.getText();
+        const ogData = await driver.executeScript(`
+          const meta = {};
+          const ogTitle = document.querySelector('meta[property="og:title"]');
+          const ogDescription = document.querySelector('meta[property="og:description"]');
+          const ogImage = document.querySelector('meta[property="og:image"]');
+          const twitterTitle = document.querySelector('meta[name="twitter:title"]');
+          const twitterDescription = document.querySelector('meta[name="twitter:description"]');
+          
+          if (ogTitle) meta.title = ogTitle.content;
+          if (ogDescription) meta.description = ogDescription.content;
+          if (ogImage) meta.image = ogImage.content;
+          if (twitterTitle && !meta.title) meta.title = twitterTitle.content;
+          if (twitterDescription && !meta.description) meta.description = twitterDescription.content;
+          
+          return meta;
+        `);
+        
+        if (ogData.title && !profileData.name) {
+          profileData.name = ogData.title.split('|')[0].trim();
+        }
+        if (ogData.description && !profileData.bio) {
+          profileData.bio = ogData.description;
+        }
+        if (ogData.image && !profileData.imageUrl) {
+          profileData.imageUrl = ogData.image;
+        }
+        console.log('Extracted data from OpenGraph meta tags');
       } catch (e) {
-        console.log('Could not extract hierarchy');
+        console.log('Could not extract OpenGraph data');
+      }
+
+      if (!profileData.name) {
+        const nameSelectors = [
+          'h1.text-heading-xlarge',
+          'h1.top-card-layout__title',
+          'h1.text-heading-large',
+          '.pv-text-details__left-panel h1',
+          '.top-card__title'
+        ];
+        
+        for (const selector of nameSelectors) {
+          try {
+            const nameElement = await driver.findElement(By.css(selector));
+            const name = await nameElement.getText();
+            if (name && name.trim()) {
+              profileData.name = name.trim();
+              console.log(`Extracted name using selector: ${selector}`);
+              break;
+            }
+          } catch (e) {}
+        }
+      }
+
+      const headlineSelectors = [
+        '.text-body-medium.break-words',
+        '.top-card-layout__headline',
+        '.pv-text-details__left-panel .text-body-medium',
+        'div.text-body-medium[data-generated-suggestion-target]'
+      ];
+      
+      for (const selector of headlineSelectors) {
+        try {
+          const headlineElement = await driver.findElement(By.css(selector));
+          const headline = await headlineElement.getText();
+          if (headline && headline.trim() && !profileData.headline) {
+            profileData.headline = headline.trim();
+            console.log(`Extracted headline using selector: ${selector}`);
+            break;
+          }
+        } catch (e) {}
+      }
+
+      if (!profileData.bio) {
+        const bioSelectors = [
+          '.pv-about__summary-text',
+          '.pv-shared-text-with-see-more',
+          'section[data-section="summary"] .pv-about__summary-text',
+          '.core-section-container__content .pv-about__summary-text'
+        ];
+        
+        for (const selector of bioSelectors) {
+          try {
+            const bioElement = await driver.findElement(By.css(selector));
+            const bio = await bioElement.getText();
+            if (bio && bio.trim()) {
+              profileData.bio = bio.trim();
+              console.log(`Extracted bio using selector: ${selector}`);
+              break;
+            }
+          } catch (e) {}
+        }
+      }
+
+      const companySelectors = [
+        '.pv-text-details__right-panel .text-body-medium',
+        '.top-card-layout__card .text-body-medium',
+        'li.pvs-list__pv-entity .t-bold span[aria-hidden="true"]'
+      ];
+      
+      for (const selector of companySelectors) {
+        try {
+          const companyElement = await driver.findElement(By.css(selector));
+          const company = await companyElement.getText();
+          if (company && company.trim()) {
+            profileData.hierarchy = company.trim();
+            console.log(`Extracted company using selector: ${selector}`);
+            break;
+          }
+        } catch (e) {}
+      }
+
+      if (!profileData.name) {
+        const urlMatch = url.match(/\/in\/([^\/]+)/);
+        if (urlMatch) {
+          const slug = urlMatch[1];
+          profileData.name = slug
+            .replace(/-\d+$/, '') // Remove trailing numbers
+            .split('-')
+            .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+            .join(' ');
+          profileData.partialData = true;
+          console.log('Extracted name from URL slug as fallback');
+        }
+      }
+
+      if (!profileData.bio && !profileData.headline && !profileData.hierarchy) {
+        profileData.partialData = true;
       }
 
     } catch (error) {
       console.error('Error scraping LinkedIn profile:', error);
+      profileData.partialData = true;
     }
 
     return profileData;
+  }
+
+  async searchPeopleByName(name) {
+    const driver = await this.getDriver();
+    const results = [];
+
+    try {
+      const searchQuery = encodeURIComponent(`${name} site:linkedin.com OR site:twitter.com OR site:github.com OR site:crunchbase.com`);
+      const url = `https://html.duckduckgo.com/html/?q=${searchQuery}`;
+      
+      await driver.get(url);
+      await driver.sleep(2000);
+
+      const resultElements = await driver.findElements(By.css('.result'));
+      
+      for (let i = 0; i < Math.min(resultElements.length, 10); i++) {
+        try {
+          const titleElement = await resultElements[i].findElement(By.css('.result__a'));
+          const snippetElement = await resultElements[i].findElement(By.css('.result__snippet'));
+          
+          const title = await titleElement.getText();
+          const link = await titleElement.getAttribute('href');
+          const snippet = await snippetElement.getText();
+          
+          let platform = 'Other';
+          let icon = '🔗';
+          if (link.includes('linkedin.com')) {
+            platform = 'LinkedIn';
+            icon = '💼';
+          } else if (link.includes('twitter.com') || link.includes('x.com')) {
+            platform = 'Twitter/X';
+            icon = '🐦';
+          } else if (link.includes('github.com')) {
+            platform = 'GitHub';
+            icon = '💻';
+          } else if (link.includes('crunchbase.com')) {
+            platform = 'Crunchbase';
+            icon = '🏢';
+          }
+          
+          results.push({
+            title: title,
+            url: link,
+            snippet: snippet,
+            platform: platform,
+            icon: icon
+          });
+        } catch (e) {
+          console.log('Could not extract result:', e.message);
+        }
+      }
+      
+      console.log(`Found ${results.length} search results for "${name}"`);
+    } catch (error) {
+      console.error('Error searching for people:', error);
+    }
+
+    return results;
   }
 
   async scrapeTwitterProfile(handle) {

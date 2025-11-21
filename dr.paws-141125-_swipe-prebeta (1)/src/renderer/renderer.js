@@ -7,6 +7,8 @@ let alertCount = 0;
 const addCsvBtn = document.getElementById('add-csv-btn');
 const addLinkedinBtn = document.getElementById('add-linkedin-btn');
 const linkedinUrlInput = document.getElementById('linkedin-url-input');
+const searchBtn = document.getElementById('search-btn');
+const searchNameInput = document.getElementById('search-name-input');
 const targetsContainer = document.getElementById('targets-container');
 const targetCountEl = document.getElementById('target-count');
 const alertCountEl = document.getElementById('alert-count');
@@ -18,6 +20,8 @@ const closeSettingsBtn = document.getElementById('close-settings-btn');
 const saveSettingsBtn = document.getElementById('save-settings-btn');
 const alertModal = document.getElementById('alert-modal');
 const closeAlertBtn = document.getElementById('close-alert-btn');
+const searchModal = document.getElementById('search-modal');
+const closeSearchBtn = document.getElementById('close-search-btn');
 const premiumBadge = document.getElementById('premium-badge');
 const alertBadge = document.getElementById('alert-badge');
 const freeTierNotice = document.getElementById('free-tier-notice');
@@ -160,6 +164,33 @@ function setupEventListeners() {
     }
   });
 
+  searchBtn.addEventListener('click', async () => {
+    const name = searchNameInput.value.trim();
+    if (!name) {
+      showNotification('Error', 'Please enter a name to search');
+      return;
+    }
+
+    searchBtn.disabled = true;
+    searchBtn.textContent = '⏳ Searching...';
+    searchNameInput.disabled = true;
+
+    const result = await ipcRenderer.invoke('search-people', name);
+
+    if (result.success && result.results.length > 0) {
+      showSearchResults(result.results);
+      searchNameInput.value = '';
+    } else if (result.success && result.results.length === 0) {
+      showNotification('No Results', 'No profiles found for this name');
+    } else {
+      showNotification('Error', result.error || 'Search failed');
+    }
+
+    searchBtn.disabled = false;
+    searchBtn.textContent = '🔍 Search';
+    searchNameInput.disabled = false;
+  });
+
   addLinkedinBtn.addEventListener('click', async () => {
     const url = linkedinUrlInput.value.trim();
     if (!url) {
@@ -181,7 +212,11 @@ function setupEventListeners() {
     if (result.success) {
       await loadTargets();
       linkedinUrlInput.value = '';
-      showNotification('Success', 'Target added successfully');
+      if (result.target.partialData) {
+        showNotification('Partial Import', 'Profile imported with limited data (may be behind login wall)');
+      } else {
+        showNotification('Success', 'Target added successfully');
+      }
     } else {
       showNotification('Error', result.error);
     }
@@ -236,6 +271,10 @@ function setupEventListeners() {
     alertModal.classList.add('hidden');
   });
 
+  closeSearchBtn.addEventListener('click', () => {
+    searchModal.classList.add('hidden');
+  });
+
   settingsModal.addEventListener('click', (e) => {
     if (e.target === settingsModal) {
       settingsModal.classList.add('hidden');
@@ -245,6 +284,12 @@ function setupEventListeners() {
   alertModal.addEventListener('click', (e) => {
     if (e.target === alertModal) {
       alertModal.classList.add('hidden');
+    }
+  });
+
+  searchModal.addEventListener('click', (e) => {
+    if (e.target === searchModal) {
+      searchModal.classList.add('hidden');
     }
   });
 }
@@ -290,6 +335,39 @@ async function openSettings() {
     : 'Enter your FCM key...';
 
   settingsModal.classList.remove('hidden');
+}
+
+function showSearchResults(results) {
+  const searchModalBody = document.getElementById('search-modal-body');
+  searchModalBody.innerHTML = `
+    <div class="search-results">
+      <p class="search-results-count">Found ${results.length} result(s)</p>
+      ${results.map(result => `
+        <div class="search-result-item">
+          <div class="search-result-header">
+            <span class="search-result-icon">${result.icon}</span>
+            <div class="search-result-info">
+              <div class="search-result-title">${escapeHtml(result.title)}</div>
+              <div class="search-result-platform">${escapeHtml(result.platform)}</div>
+            </div>
+          </div>
+          <div class="search-result-snippet">${escapeHtml(result.snippet)}</div>
+          <div class="search-result-actions">
+            <a href="${escapeHtml(result.url)}" class="btn btn-small btn-secondary" onclick="event.preventDefault(); window.open('${escapeHtml(result.url)}')">
+              🔗 View Profile
+            </a>
+            ${result.platform === 'LinkedIn' ? `
+              <button class="btn btn-small btn-primary" onclick="addFromSearchResult('${escapeHtml(result.url)}')">
+                ➕ Add to Targets
+              </button>
+            ` : ''}
+          </div>
+        </div>
+      `).join('')}
+    </div>
+  `;
+
+  searchModal.classList.remove('hidden');
 }
 
 function showChurnAlert(data) {
@@ -346,6 +424,31 @@ window.showAlertDetails = function(targetId) {
     signals: target.churnSignals,
     probability: probability
   });
+};
+
+window.addFromSearchResult = async function(url) {
+  searchModal.classList.add('hidden');
+  
+  linkedinUrlInput.value = url;
+  addLinkedinBtn.disabled = true;
+  addLinkedinBtn.textContent = '⏳ Scraping...';
+
+  const result = await ipcRenderer.invoke('add-target-linkedin', url);
+
+  if (result.success) {
+    await loadTargets();
+    linkedinUrlInput.value = '';
+    if (result.target.partialData) {
+      showNotification('Partial Import', 'Profile imported with limited data (may be behind login wall)');
+    } else {
+      showNotification('Success', 'Target added successfully');
+    }
+  } else {
+    showNotification('Error', result.error);
+  }
+
+  addLinkedinBtn.disabled = false;
+  addLinkedinBtn.textContent = '➕ Add Profile';
 };
 
 function showNotification(title, message) {

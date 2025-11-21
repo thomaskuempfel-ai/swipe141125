@@ -180,3 +180,12 @@ ipcMain.handle('open-targets-folder', async () => {
   shell.openPath(targetsDir);
   return { success: true };
 });
+
+ipcMain.handle('search-people', async (event, name) => {
+  try {
+    const results = await scraperManager.searchPeopleByName(name);
+    return { success: true, results };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+});
