@@ -47,7 +47,7 @@ function createWindow() {
   targetManager = new TargetManager(targetsDir, store);
   scraperManager = new ScraperManager(store);
   paymentManager = new PaymentManager(store);
-  alertManager = new AlertManager(mainWindow);
+  alertManager = new AlertManager(mainWindow, store);
 
   if (paymentManager.isPremium()) {
     scraperManager.startMonitoring(targetManager, alertManager);
@@ -69,10 +69,11 @@ app.whenReady().then(() => {
 app.on('window-all-closed', () => {
 });
 
-app.on('before-quit', () => {
+app.on('before-quit', async () => {
   app.isQuitting = true;
   if (scraperManager) {
     scraperManager.stopMonitoring();
+    await scraperManager.cleanup();
   }
 });
 

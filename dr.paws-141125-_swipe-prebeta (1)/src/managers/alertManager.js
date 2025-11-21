@@ -3,13 +3,27 @@ const path = require('path');
 const axios = require('axios');
 
 class AlertManager {
-  constructor(mainWindow) {
+  constructor(mainWindow, store) {
     this.mainWindow = mainWindow;
+    this.store = store;
     this.alertSound = path.join(__dirname, '../../assets/alert.wav');
+    this.recentAlerts = new Map(); // For deduplication
   }
 
   triggerChurnAlert(target, churnSignals) {
     console.log(`🚨 CHURN ALERT for ${target.name}`);
+    
+    const alertKey = `${target.id}-${churnSignals[0]?.tweet || ''}`;
+    const lastAlertTime = this.recentAlerts.get(alertKey);
+    const now = Date.now();
+    const cooldownMs = 2 * 60 * 60 * 1000; // 2 hours
+    
+    if (lastAlertTime && (now - lastAlertTime) < cooldownMs) {
+      console.log(`Skipping duplicate alert for ${target.name} (cooldown active)`);
+      return;
+    }
+    
+    this.recentAlerts.set(alertKey, now);
     
     const probability = Math.min(95, 50 + (churnSignals.length * 15));
 
@@ -39,7 +53,7 @@ class AlertManager {
   }
 
   async sendSlackAlert(target, churnSignals, probability) {
-    const slackWebhook = this.mainWindow.webContents.store?.get('slackWebhook');
+    const slackWebhook = this.store.get('slackWebhook');
     if (!slackWebhook) {
       return;
     }
@@ -81,7 +95,7 @@ class AlertManager {
   }
 
   async sendPushNotification(target, churnSignals, probability) {
-    const fcmKey = this.mainWindow.webContents.store?.get('fcmKey');
+    const fcmKey = this.store.get('fcmKey');
     if (!fcmKey) {
       return;
     }

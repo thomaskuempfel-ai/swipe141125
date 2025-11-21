@@ -1,6 +1,7 @@
 const { Builder, By, until } = require('selenium-webdriver');
 const chrome = require('selenium-webdriver/chrome');
 const axios = require('axios');
+const path = require('path');
 
 class ScraperManager {
   constructor(store) {
@@ -12,17 +13,31 @@ class ScraperManager {
   async getDriver() {
     if (!this.driver) {
       const options = new chrome.Options();
-      options.addArguments('--headless');
+      options.addArguments('--headless=new');
       options.addArguments('--no-sandbox');
       options.addArguments('--disable-dev-shm-usage');
       options.addArguments('--disable-gpu');
+      options.addArguments('--disable-blink-features=AutomationControlled');
       options.addArguments('--window-size=1920,1080');
       options.addArguments('--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
+      options.setPageLoadStrategy('eager');
 
-      this.driver = await new Builder()
-        .forBrowser('chrome')
-        .setChromeOptions(options)
-        .build();
+      let chromedriverPath;
+      try {
+        chromedriverPath = require('chromedriver').path;
+      } catch (e) {
+        console.log('Using system chromedriver');
+      }
+
+      const builder = new Builder().forBrowser('chrome').setChromeOptions(options);
+      
+      if (chromedriverPath) {
+        const service = new chrome.ServiceBuilder(chromedriverPath);
+        builder.setChromeService(service);
+      }
+
+      this.driver = await builder.build();
+      await this.driver.manage().setTimeouts({ implicit: 10000, pageLoad: 30000, script: 30000 });
     }
     return this.driver;
   }
@@ -240,6 +255,10 @@ class ScraperManager {
           targetManager.updateTarget(target.id, {
             lastChecked: new Date().toISOString()
           });
+        }
+        
+        if (this.driver) {
+          await this.driver.manage().deleteAllCookies();
         }
       } catch (error) {
         console.error(`Error checking target ${target.name}:`, error);
