@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#db2777;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#172554;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Background circle -->
+  <circle cx="256" cy="256" r="256" fill="url(#grad1)"/>
+  
+  <!-- Paw print design -->
+  <!-- Main pad (center) -->
+  <ellipse cx="256" cy="300" rx="80" ry="100" fill="white" opacity="0.95"/>
+  
+  <!-- Top left toe -->
+  <ellipse cx="180" cy="200" rx="45" ry="60" fill="white" opacity="0.95" transform="rotate(-20 180 200)"/>
+  
+  <!-- Top center toe -->
+  <ellipse cx="256" cy="170" rx="45" ry="60" fill="white" opacity="0.95"/>
+  
+  <!-- Top right toe -->
+  <ellipse cx="332" cy="200" rx="45" ry="60" fill="white" opacity="0.95" transform="rotate(20 332 200)"/>
+  
+  <!-- Bottom right toe -->
+  <ellipse cx="340" cy="280" rx="40" ry="55" fill="white" opacity="0.95" transform="rotate(30 340 280)"/>
+  
+  <!-- Heart symbol in center of main pad -->
+  <path d="M 256 280 
+           C 256 270, 246 260, 236 260
+           C 226 260, 216 270, 216 280
+           C 216 270, 206 260, 196 260
+           C 186 260, 176 270, 176 280
+           C 176 300, 196 320, 216 340
+           L 236 360
+           L 256 340
+           C 276 320, 296 300, 296 280
+           C 296 270, 286 260, 276 260
+           C 266 260, 256 270, 256 280 Z" 
+        fill="#db2777" opacity="0.8" transform="translate(20, 0) scale(0.8)"/>
+</svg>
